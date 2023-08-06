@@ -1,3 +1,12 @@
+ADMIN CREDENTIALS:
+
+admin@test.com  pass:123456
+
+USER CREDENTIALS:
+test@test.com  pass:123456
+
+
+
 # tattoApp
 
 This template should help get you started developing with Vue 3 in Vite.
