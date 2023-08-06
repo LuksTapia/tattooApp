@@ -1,0 +1,234 @@
+<script>
+
+import Header from '../components/Header.vue'
+import VueDatePicker from '@vuepic/vue-datepicker';
+import '@vuepic/vue-datepicker/dist/main.css';
+import turnosService from '../services/turnosService';
+import { useLoginStore } from '../stores/login'
+import { storeToRefs } from 'pinia';
+
+export default {
+    setup(){
+        const store = useLoginStore()
+        const { isLogin, user } = storeToRefs(store)
+        return { isLogin, user }
+    },
+    components: { Header, VueDatePicker },
+    data() {
+        return {
+            date: null,
+            tatuador: null,
+            isOpen: false,
+            title: 'Turno reservado con Exito!',
+            message: '',
+            submessage: '',
+        };
+    },
+    methods: {
+        async onSubmit (){
+            if(this.tatuador === null){
+                alert('Es obligatorio ingresar un tatuador')
+                return;
+            }
+            if(this.date === null){
+                alert('Es obligatorio ingresar una fecha')
+                return;
+            }
+
+            // FUNCION QUE AGARRA EL DATE Y LO TRANSFORMA EN UNIX QUE ES LO QUE RECIBE MOKAPI
+            const date = Math.floor(new Date(this.date).getTime() / 1000)
+
+            const elem = {
+                date: date,
+                tatuador: {
+                    name: this.tatuador
+                },
+                user: {
+                    email: this.user.email
+                }
+            }
+            try {
+                await turnosService.agregar(elem);
+                this.message = 'Fecha: ' + this.date;
+                this.submessage = 'Tatuador: ' + this.tatuador
+                this.openModal();
+            } catch (error) {
+                console.log(error);
+                alert("Ocurrio un error reservando el turno")
+            }
+        },
+        openModal() {
+            this.isOpen = true;
+        },
+        goTurnos(){
+            this.$router.push('/myTurns')
+        },
+        goHome(){
+            this.$router.push('/home')
+        }
+    }
+  };
+
+</script>
+
+
+<template>
+  
+    <Header />
+    <div class="container">
+        <div class="background"></div>
+
+        <h3>RESERVA TU TURNO</h3>
+        <form v-on:submit.prevent="onSubmit">
+            <label>Elegi tu tatuador</label>
+            <select v-model="tatuador">
+                <option value=""></option>
+                <option value="Nico Calabria">Nico Calabria</option>
+                <option value="Ignacio Irigoitia">Ignacio Irigoitia</option>
+                <option value="Jorge Alba">Jorge Alba</option>
+                <option value="Lucas Tapia">Lucas Tapia</option>
+            </select>
+            
+            <label>Elegi la fecha disponible</label>
+            <VueDatePicker :min-date="new Date()" model-type="MM/dd/yyyy HH:mm" class="pickerDate" v-model="date"></VueDatePicker>
+
+            <button type="submit" @click="visible = true" class="reservarBoton" >RESERVAR</button>
+            
+        </form>
+
+        <div class="modal-overlay" v-show="isOpen">
+            <div class="modal-container">
+                <div class="modal-content">
+                <h2 class="title">{{ title }}</h2>
+                <p>{{ message }}</p>
+                <p>{{ submessage }}</p>
+                <div class="row">
+                    <button class="turnos_button" @click="goTurnos">Ir a mis turnos</button>
+                    <button class="home_button" @click="goHome">Ir al home</button>
+                </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</template>
+
+<style scoped>
+
+    .turnos_button {
+        background-color: #4a8357;
+    }
+
+    .home_button {
+        background-color: #2c7fa8;
+    }
+
+    .row button {
+        margin-left: 10px;
+        padding: 10px;
+        border-radius: 20px;
+        border: none;
+        font-weight: bold;
+        color: white;
+    }
+
+    .title {
+        color: black;
+    }
+
+    .row button:hover {
+        cursor: pointer;
+    }
+
+    .row {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+    }
+
+    select {
+        padding: 10px 5px;
+        margin-bottom: 20px;
+    }
+
+    form {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    label {
+        color: white;
+        margin-bottom: 10px;
+    }
+
+    h3 {
+        color: white;
+        font-size: 30px;
+    }
+
+    .reservarBoton {
+        margin-top: 20px;
+        padding: 20px 50px;
+        border-radius: 25px;
+        background-color: rgb(55, 54, 54) ;
+        border: none;
+        color: white;
+        font-size: 25px;
+        font-weight: bold;
+        box-shadow: 0px 1px 5px 1px rgba(0, 0, 0, 0.9);
+    }
+
+    .reservarBoton:hover {
+        cursor: pointer;
+    }
+
+
+    .background {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: url('https://wallpaperset.com/w/full/8/2/6/543458.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        z-index: -1;
+        background-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .container {
+        height: calc(100vh - 150px);
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .modal-container {
+        background-color: #fff;
+        padding: 20px;
+    }
+
+    .modal-content {
+        text-align: center;
+    }
+
+
+</style>
